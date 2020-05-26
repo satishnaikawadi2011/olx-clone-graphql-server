@@ -8,6 +8,7 @@ const { check, validationResult } = require('express-validator');
 const normalize = require('normalize-url');
 
 const User = require('../../models/User');
+const auth = require('../../middleware/auth');
 
 // @route    POST api/users
 // @desc     Register user
@@ -76,5 +77,64 @@ router.post(
 		}
 	}
 );
+
+// @route GET api/users
+// @desc get user logged in
+// @access Private
+
+router.get('/me', auth, async (req, res) => {
+	try {
+		const user = await User.findById(req.user.id).select('-password');
+		await user.populate('selledProducts').execPopulate();
+		// console.log(user.selledProducts);
+		const selledProducts = user.selledProducts;
+		res.status(200).send({ user, selledProducts });
+	} catch (err) {
+		console.error(err.message);
+		res.status(500).send('Server Error');
+	}
+});
+
+// @route  Patch api/users
+// @desc   updating user
+// @access  Private
+
+router.patch('/me', auth, async (req, res) => {
+	const updates = Object.keys(req.body);
+	const allowedUpdates = [
+		'name',
+		'email',
+		'password'
+	];
+	const isValidOperation = updates.every((update) => allowedUpdates.includes(update));
+
+	if (!isValidOperation) {
+		return res.status(400).send({ error: 'Invalid updates!' });
+	}
+
+	try {
+		const user = await User.findById(req.user.id);
+		updates.forEach((update) => (user[update] = req.body[update]));
+		await user.save();
+		res.send('updated succesfully');
+	} catch (e) {
+		res.status(400).send(e);
+	}
+});
+
+// @route Delete api/users
+// @desc  deleting use account
+// @access  Priate
+router.delete('/me', auth, async (req, res) => {
+	try {
+		const user = await User.findByIdAndDelete(req.user.id);
+		if (user) {
+			return res.send(user);
+		}
+		res.send();
+	} catch (e) {
+		res.status(500).send();
+	}
+});
 
 module.exports = router;

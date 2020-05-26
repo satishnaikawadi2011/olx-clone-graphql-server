@@ -71,20 +71,30 @@ const upload = multer({
 // 		res.status(400).send({ error: error.message });
 // 	}
 // );
-router.post(
-	'/upload',
-	auth,
-	upload.single('image'),
-	async (req, res) => {
-		const user = User.find({ id: req.user.id });
-		user.avatar = req.file.buffer;
-		await user.save();
-		res.send();
-	},
-	(error, req, res, next) => {
-		res.status(400).send({ error: error.message });
-	}
-);
+// router.post(
+// 	'/upload',
+// 	auth,
+// 	upload.single('image'),
+// 	async (req, res) => {
+// 		try {
+// 			const product = await SelledProduct.findById('5eccd55ccc948e8df471bb70');
+// 			// user.avatar = req.file.buffer;
+// 			// await user.save();
+// 			if (!product) {
+// 				return res.status(400).send();
+// 			}
+
+// 			product.image = await req.file.buffer;
+// 			await product.save();
+// 			await res.send('file uploaded succesfully');
+// 		} catch (err) {
+// 			res.status(500).send(err);
+// 		}
+// 	},
+// 	(error, req, res, next) => {
+// 		res.status(400).send({ error: error.message });
+// 	}
+// );
 
 // @route    POST api/product
 // @desc     Create or update user profile
@@ -94,7 +104,7 @@ router.post(
 	'/',
 	[
 		auth,
-
+		upload.single('image'),
 		[
 			check('category', 'Category is required').not().isEmpty(),
 			check('brand', 'brand is required').not().isEmpty(),
@@ -112,13 +122,21 @@ router.post(
 			return res.status(400).json({ errors: errors.array() });
 		}
 
-		const productData = { ...req.body, owner: req.user.id };
-
 		try {
-			const product = new SelledProduct(productData);
+			if (req.file) {
+				const image = await req.file.buffer;
 
-			await product.save();
-			res.json(product);
+				const productData = { ...req.body, owner: req.user.id, image };
+				const product = new SelledProduct(productData);
+				await product.save();
+				res.json(product);
+			}
+			else {
+				const productData = { ...req.body, owner: req.user.id };
+				const product = new SelledProduct(productData);
+				await product.save();
+				res.json(product);
+			}
 		} catch (err) {
 			console.error(err.message);
 			res.status(500).send('Server Error');
