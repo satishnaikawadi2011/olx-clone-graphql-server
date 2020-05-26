@@ -11,7 +11,7 @@ const normalize = require('normalize-url');
 
 const User = require('../../models/User');
 const SelledProduct = require('../../models/selledProduct');
-// @route    GET api/products/me
+// @route    GET api/products
 // @desc     Get current users all products
 // @access   Private
 router.get('/me', auth, async (req, res) => {
@@ -47,57 +47,9 @@ const upload = multer({
 		cb(undefined, true);
 	}
 });
-// @route POST image
-// @desc  uploading product image
-// @access Priate
-// router.post(
-// 	'/upload',
-// 	[
-// 		auth,
-// 		upload.single('image')
-// 	],
-// 	async (req, res) => {
-// 		try {
-// 			const user = req.user;
-// 			user.avatar = req.file.buffer;
-// 			await user.save();
-// 			await res.send();
-// 		} catch (err) {
-// 			console.error(err.message);
-// 			res.status(400).send('server error');
-// 		}
-// 	},
-// 	(error, req, res, next) => {
-// 		res.status(400).send({ error: error.message });
-// 	}
-// );
-// router.post(
-// 	'/upload',
-// 	auth,
-// 	upload.single('image'),
-// 	async (req, res) => {
-// 		try {
-// 			const product = await SelledProduct.findById('5eccd55ccc948e8df471bb70');
-// 			// user.avatar = req.file.buffer;
-// 			// await user.save();
-// 			if (!product) {
-// 				return res.status(400).send();
-// 			}
-
-// 			product.image = await req.file.buffer;
-// 			await product.save();
-// 			await res.send('file uploaded succesfully');
-// 		} catch (err) {
-// 			res.status(500).send(err);
-// 		}
-// 	},
-// 	(error, req, res, next) => {
-// 		res.status(400).send({ error: error.message });
-// 	}
-// );
 
 // @route    POST api/product
-// @desc     Create or update user profile
+// @desc     Create  user profile
 // @access   Private
 
 router.post(
@@ -143,5 +95,66 @@ router.post(
 		}
 	}
 );
+
+// @route  Get api/product
+// @desc   get all products
+// @access Public
+
+router.get('/', async (req, res) => {
+	try {
+		const products = await SelledProduct.find({}).populate('owner', 'name');
+		await res.status(200).send(products);
+	} catch (e) {
+		res.status(400).send(e);
+	}
+});
+
+// @route Patch api/product
+// @desc  update selling price of product
+// @access Private
+
+router.patch('/me/:id', auth, async (req, res) => {
+	const updates = Object.keys(req.body);
+	const allowedUpdates = [
+		'price'
+	];
+	const isValidOperation = updates.every((update) => allowedUpdates.includes(update));
+
+	if (!isValidOperation) {
+		return res.status(400).send({ error: 'Invalid updates!' });
+	}
+
+	try {
+		const product = await SelledProduct.findOne({ _id: req.params.id, owner: req.user.id });
+
+		if (!product) {
+			return res.status(404).send();
+		}
+
+		updates.forEach((update) => (product[update] = req.body[update]));
+		await product.save();
+		res.send(product);
+	} catch (e) {
+		res.status(400).send(e);
+	}
+});
+
+// @route Delete api/product
+// @desc  delete any product
+// @access Private
+
+router.delete('/me/:id', auth, async (req, res) => {
+	try {
+		const product = await SelledProduct.findOneAndDelete({ _id: req.params.id, owner: req.user.id });
+
+		if (!product) {
+			res.status(404).send();
+		}
+
+		res.send(product);
+	} catch (e) {
+		res.status(500).send();
+	}
+});
 
 module.exports = router;
