@@ -23,7 +23,15 @@ const UserSchema = new mongoose.Schema({
 	date     : {
 		type    : Date,
 		default : Date.now
-	}
+	},
+	cart     : [
+		{
+			product : {
+				type : mongoose.Schema.Types.ObjectId,
+				ref  : 'selledProduct'
+			}
+		}
+	]
 });
 
 UserSchema.virtual('selledProducts', {
