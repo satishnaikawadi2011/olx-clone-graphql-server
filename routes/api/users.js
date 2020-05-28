@@ -85,6 +85,9 @@ router.post(
 router.get('/me', auth, async (req, res) => {
 	try {
 		const user = await User.findById(req.user.id).select('-password');
+		if (!user) {
+			return res.status(400).send();
+		}
 		await user.populate('selledProducts').execPopulate();
 		// console.log(user.selledProducts);
 		const selledProducts = user.selledProducts;

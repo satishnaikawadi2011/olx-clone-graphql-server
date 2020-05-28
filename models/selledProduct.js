@@ -49,6 +49,10 @@ const SelledProductSchema = new mongoose.Schema({
 	image       : {
 		type : Buffer
 	},
+	isBuyed     : {
+		type    : Boolean,
+		default : false
+	},
 	date        : {
 		type    : Date,
 		default : Date.now
