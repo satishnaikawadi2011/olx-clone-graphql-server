@@ -1,4 +1,4 @@
 {
-	"mongoURI": "mongodb://127.0.0.1:27017/new-olx",
+	"mongoURI": "mongodb://127.0.0.1:27017/towards-final",
 	"jwtSecret": "thisismyworld"
 }

@@ -5,30 +5,34 @@ const jwt = require('jsonwebtoken');
 
 const UserSchema = new mongoose.Schema(
 	{
-		name            : {
+		name     : {
 			type     : String,
 			required : true
 		},
-		email           : {
+		email    : {
 			type     : String,
 			required : true,
 			unique   : true
 		},
-		password        : {
+		password : {
 			type     : String,
 			required : true
-		},
-
-		favourites      : [
-			{ type: mongoose.Types.ObjectId, ref: 'AddToFavourite' }
-		],
-		createdProducts : [
-			{ type: mongoose.Types.ObjectId, ref: 'SelledProduct' }
-		]
-	},
-	{
-		timestamps : true
+		}
+		// avatar   : {
+		// 	type : String
+		// },
+		// cart     : [
+		// 	{
+		// 		product : {
+		// 			type : mongoose.Schema.Types.ObjectId,
+		// 			ref  : 'selledProduct'
+		// 		}
+		// 	}
+		// ]
 	}
+	// {
+	// 	timestamps : true
+	// }
 );
 
 // UserSchema.virtual('selledProducts', {
@@ -72,14 +76,14 @@ const UserSchema = new mongoose.Schema(
 // 	return user;
 // };
 // Hash the plain text password before saving
-UserSchema.pre('save', async function(next) {
-	const user = this;
+// UserSchema.pre('save', async function(next) {
+// 	const user = this;
 
-	if (user.isModified('password')) {
-		user.password = await bcrypt.hash(user.password, 8);
-	}
+// 	if (user.isModified('password')) {
+// 		user.password = await bcrypt.hash(user.password, 8);
+// 	}
 
-	next();
-});
+// 	next();
+// });
 
-module.exports = mongoose.model('user', UserSchema);
+module.exports = mongoose.model('User', UserSchema);

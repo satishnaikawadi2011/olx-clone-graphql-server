@@ -1,0 +1,5 @@
+{
+	"mongoURI": "mongodb://127.0.0.1:27017/meri-dukan",
+	"jwtSecret": "thisismyworld",
+	"MAPBOX_API_KEY": "pk.eyJ1Ijoic2F0aXNobmFpa2F3YWRpIiwiYSI6ImNrYnM2cDkxZzAwcHEydXBpeDRnN2JkYjYifQ.3_KZSoG0_BvkSrXW11MBdg"
+}

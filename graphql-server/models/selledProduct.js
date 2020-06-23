@@ -2,10 +2,10 @@ const mongoose = require('mongoose');
 
 const SelledProductSchema = new mongoose.Schema(
 	{
-		owner       : {
-			type : mongoose.Schema.Types.ObjectId,
-			ref  : 'user'
-		},
+		// owner       : {
+		// 	type : mongoose.Schema.Types.ObjectId,
+		// 	ref  : 'user'
+		// },
 		category    : {
 			type     : String,
 			required : true
@@ -47,18 +47,21 @@ const SelledProductSchema = new mongoose.Schema(
 			type     : Number,
 			required : true
 		},
-		image       : {
+		ownerId     : {
 			type     : String,
 			required : true
 		},
-		mobile      : {
-			type     : Number,
-			required : true
+		// image       : {
+		// 	type : Buffer
+		// },
+		isBuyed     : {
+			type    : Boolean,
+			default : false
 		}
-	},
-	{
-		timestamps : true
 	}
+	// {
+	// 	timestamps : true
+	// }
 );
 
-module.exports = SelledProduct = mongoose.model('SelledProduct', SelledProductSchema);
+module.exports = mongoose.model('SelledProduct', SelledProductSchema);

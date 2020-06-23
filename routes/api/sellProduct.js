@@ -5,8 +5,9 @@ const config = require('config');
 const router = express.Router();
 const auth = require('../../middleware/auth');
 const { check, validationResult } = require('express-validator');
+const populateUser = require('../../populatong-functions/populateFunctions');
 // bring in normalize to give us a proper url, regardless of what user entered
-const normalize = require('normalize-url');
+// const normalize = require('normalize-url');
 // const checkObjectId = require('../../middleware/checkObjectId');
 
 const User = require('../../models/User');
@@ -18,10 +19,7 @@ router.get('/me', auth, async (req, res) => {
 	try {
 		const products = await SelledProduct.find({
 			owner : req.user.id
-		}).populate('owner', [
-			'name',
-			'avatar'
-		]);
+		});
 
 		if (!products) {
 			return res.status(400).json({ msg: 'There are no products sold by this user' });
@@ -56,7 +54,7 @@ router.post(
 	'/',
 	[
 		auth,
-		upload.single('image'),
+
 		[
 			check('category', 'Category is required').not().isEmpty(),
 			check('brand', 'brand is required').not().isEmpty(),
@@ -75,20 +73,13 @@ router.post(
 		}
 
 		try {
-			if (req.file) {
-				const image = await req.file.buffer;
-
-				const productData = { ...req.body, owner: req.user.id, image };
-				const product = new SelledProduct(productData);
-				await product.save();
-				res.json(product);
-			}
-			else {
-				const productData = { ...req.body, owner: req.user.id };
-				const product = new SelledProduct(productData);
-				await product.save();
-				res.json(product);
-			}
+			const productData = { ...req.body, owner: req.user.id };
+			const product = new SelledProduct(productData);
+			let user = User.findById(req.user.id);
+			user.createdProducts.push(product);
+			await user.save();
+			await product.save();
+			res.json(product);
 		} catch (err) {
 			console.error(err.message);
 			res.status(500).send('Server Error');
@@ -102,7 +93,14 @@ router.post(
 
 router.get('/', async (req, res) => {
 	try {
-		const products = await SelledProduct.find({}).populate('owner', 'name');
+		let products = await SelledProduct.find({});
+		products = products.map((product) => {
+			return {
+				...product,
+				_id   : product.id,
+				owner : populateUser.bind(this, product.owner)
+			};
+		});
 		await res.status(200).send(products);
 	} catch (e) {
 		res.status(400).send(e);
@@ -154,6 +152,29 @@ router.delete('/me/:id', auth, async (req, res) => {
 		res.send(product);
 	} catch (e) {
 		res.status(500).send();
+	}
+});
+
+// @route Get  api/product
+// @desc  get my recently added product
+// @access Private
+router.get('/me/recent', auth, async (req, res) => {
+	try {
+		const user = await User.findById(req.user.id).populate({
+			path    : 'selledProducts',
+			options : {
+				sort : {
+					createdAt : -1
+				}
+			}
+		});
+		if (!user) {
+			return res.status(400).send();
+		}
+		res.send(user.selledProducts[0]);
+	} catch (err) {
+		console.error(err.message);
+		res.status(500).send('Server Error');
 	}
 });
 

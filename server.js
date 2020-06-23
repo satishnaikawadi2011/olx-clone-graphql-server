@@ -14,8 +14,8 @@ app.use(express.json());
 app.use('/api/users', require('./routes/api/users'));
 app.use('/api/auth', require('./routes/api/auth'));
 app.use('/api/product', require('./routes/api/sellProduct'));
-app.use('/api/buy', require('./routes/api/buyProduct'));
-app.use('/api/cart', require('./routes/api/cart'));
+app.use('/api/addToFavourite', require('./routes/api/addToFavourite'));
+// app.use('/api/cart', require('./routes/api/cart'));
 // app.use('/api/posts', require('./routes/api/posts'));
 
 // Serve static assets in production
