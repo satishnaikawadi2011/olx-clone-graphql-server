@@ -1,9 +1,10 @@
 const express = require('express');
 const connectDB = require('./config/db');
+const myGeocoder = require('./utils/location');
 const path = require('path');
 const HttpError = require('./models/http-error');
-const myGeocoder = require('./utils/location');
 const productRoutes = require('./routes/products-routes');
+const userRoutes = require('./routes/users-routes');
 // /Users/satish/mongodb/bin/mongod.exe  --dbpath=/users/satish/mongodb-data
 const app = express();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 
 // Define Routes
 app.use('/api/products', productRoutes);
+app.use('/api/users', userRoutes);
 
 // middleware for route request which doesn't exist
 app.use((req, res, next) => {
@@ -30,8 +32,8 @@ app.use((err, req, res, next) => {
 	res.status(err.code || 500);
 	res.json({ message: err.message || 'An unknown error occurred' });
 });
-
-// myGeocoder('Mumbai', (err, res) => {
+// const stringAddress = 'mumbai maharashtra five gardens';
+// myGeocoder(stringAddress, (err, res) => {
 // 	if (err) {
 // 		return console.log(err);
 // 	}
