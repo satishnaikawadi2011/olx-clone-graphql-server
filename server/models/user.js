@@ -29,7 +29,7 @@ userSchema.pre('remove', async function(next) {
 // genereting jwt token
 userSchema.methods.generateAuthToken = async function() {
 	const user = this;
-	const token = jwt.sign({ _id: user._id.toString() }, config.get('jwtSecret'));
+	const token = jwt.sign({ _id: user._id.toString() }, config.get('jwtSecret'), { expiresIn: '2h' });
 
 	return token;
 };

@@ -1,7 +1,8 @@
 const express = require('express');
 const connectDB = require('./config/db');
-const myGeocoder = require('./utils/location');
 const path = require('path');
+const fs = require('fs');
+const cors = require('cors');
 const HttpError = require('./models/http-error');
 const productRoutes = require('./routes/products-routes');
 const userRoutes = require('./routes/users-routes');
@@ -13,6 +14,8 @@ connectDB();
 
 // Init Middleware
 app.use(express.json());
+app.use(cors());
+app.use('/uploads/images', express.static(path.join('uploads', 'images')));
 
 // Define Routes
 app.use('/api/products', productRoutes);
@@ -24,6 +27,19 @@ app.use((req, res, next) => {
 	throw error;
 });
 
+app.use((error, req, res, next) => {
+	if (req.file) {
+		fs.unlink(req.file.path, (err) => {
+			console.log(err);
+		});
+	}
+	if (res.headerSent) {
+		return next(error);
+	}
+	res.status(error.code || 500);
+	res.json({ message: error.message || 'An unknown error occurred!' });
+});
+
 // error handling midleware
 app.use((err, req, res, next) => {
 	if (res.headerSent) {
@@ -32,15 +48,6 @@ app.use((err, req, res, next) => {
 	res.status(err.code || 500);
 	res.json({ message: err.message || 'An unknown error occurred' });
 });
-// const stringAddress = 'mumbai maharashtra five gardens';
-// myGeocoder(stringAddress, (err, res) => {
-// 	if (err) {
-// 		return console.log(err);
-// 	}
-// 	else {
-// 		console.log(res);
-// 	}
-// });
 
 // Serve static assets in production
 

@@ -8,18 +8,21 @@ const Product = require('../models/product');
 // -------------------------------------------------------------------------------------------------------------------------------------------------
 const getProductById = async (req, res, next) => {
 	const productId = req.params.pid;
-	let product;
+
 	try {
-		product = await Product.findById(productId);
+		const product = await Product.findById(productId).populate('owner', [
+			'name',
+			'email'
+		]);
+		if (!product) {
+			const error = new HttpError('Could not found a product for rovided id', 404);
+			return next(error);
+		}
+		res.json({ product: product.toObject({ getters: true }) });
 	} catch (err) {
 		const error = new HttpError('Something went wrong,could not find a product', 500);
 		return next(error);
 	}
-	if (!product) {
-		const error = new HttpError('Could not found a product for rovided id', 404);
-		return next(error);
-	}
-	res.json({ product: product.toObject({ getters: true }) });
 };
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------
@@ -55,7 +58,7 @@ const createProduct = async (req, res, next) => {
 				brand,
 				model,
 				category,
-				image       : 'https://picsum.photos/200',
+				image       : 'https://source.unsplash.com/random',
 				owner       : req.user.id,
 				location
 			});
@@ -86,6 +89,7 @@ const createProduct = async (req, res, next) => {
 				//   await createdPlace.save({ session: sess });
 				req.user.selledProducts.push(createdProduct);
 				await req.user.save();
+				res.json(createProduct);
 			} catch (err) {
 				const error = new HttpError('Creating product failed, please try again.', 500);
 				return next(err);
@@ -134,6 +138,7 @@ const getProducts = async (req, res, nexr) => {
 // -------------------------------------------------------------------------------------------------------------------------------------------------
 
 const updateProductById = async (req, res, next) => {
+	console.log(req.body);
 	const updates = Object.keys(req.body);
 	const product = await Product.findOne({ _id: req.params.pid, owner: req.user.id });
 	if (!product) {
@@ -203,6 +208,10 @@ const updateProductById = async (req, res, next) => {
 
 const removeProductById = async (req, res, next) => {
 	const productId = req.params.pid;
+	if (!req.user) {
+		const error = new HttpError('Please authenticate', 404);
+		return next(error);
+	}
 	try {
 		const product = await Product.findOneAndDelete({ _id: productId, owner: req.user.id });
 		if (!product) {
@@ -214,7 +223,7 @@ const removeProductById = async (req, res, next) => {
 		await req.user.save();
 		res.json({ product: product });
 	} catch (e) {
-		// const error = new HttpError('Unable to remove product , please try again', 500);
+		const error = new HttpError('Unable to remove product , please try again', 500);
 		return next(e);
 	}
 };
@@ -222,6 +231,96 @@ const removeProductById = async (req, res, next) => {
 // -------------------------------------------------------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------------------------------------------------------
 
+const addToCart = async (req, res, next) => {
+	const productId = req.params.pid;
+	const product = await Product.findById(productId);
+	if (!product) {
+		const error = new HttpError('Could not found product for provided id', 404);
+		return next(error);
+	}
+	if (req.user.cart.indexOf(productId) !== -1) {
+		const error = new HttpError('product is already present in the cart', 422);
+		return next(error);
+	}
+	try {
+		await req.user.cart.push(productId);
+		req.user.totalProducts = req.user.totalProducts + 1;
+		req.user.totalAmount = req.user.totalAmount + product.price;
+		await req.user.save();
+		res.json({ cart: req.user.cart });
+	} catch (e) {
+		const error = new HttpError('Unable to add product to cart,please try again', 500);
+		return next(error);
+	}
+};
+
+// -------------------------------------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------------------------------
+
+const getCart = async (req, res, next) => {
+	try {
+		const user = await User.findById(req.user.id).populate('cart');
+		const cart = user.cart;
+		await res.json({ cart: cart });
+	} catch (e) {
+		const error = new HttpError('Unable to fetch cart,please try again', 500);
+		return next(error);
+	}
+};
+
+// -------------------------------------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------------------------------
+
+const removeFromCart = async (req, res, next) => {
+	const productId = req.params.pid;
+	const product = await Product.findById(productId);
+	if (!product) {
+		const error = new HttpError('Could not found product for provided id', 404);
+		return next(error);
+	}
+	if (req.user.cart.indexOf(productId) === -1) {
+		const error = new HttpError('product is not present in the cart', 422);
+		return next(error);
+	}
+	try {
+		await req.user.cart.pull(productId);
+		req.user.totalProducts = req.user.totalProducts - 1;
+		req.user.totalAmount = req.user.totalAmount - product.price;
+		await req.user.save();
+		res.json({ cart: req.user.cart });
+	} catch (e) {
+		const error = new HttpError('Unable to remove product from cart,please try again', 500);
+		return next(error);
+	}
+};
+
+// -------------------------------------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------------------------------
+
+const clearCart = async (req, res, next) => {
+	if (req.user.cart.length === 0) {
+		const error = new HttpError('cart is already empty', 422);
+		return next(error);
+	}
+	try {
+		req.user.cart = [];
+		req.user.totalAmount = 0;
+		req.user.totalProducts = 0;
+		await req.user.save();
+		await res.json({ cart: req.user.cart });
+	} catch (e) {
+		const error = new HttpError('Unable to clear cart,please try again', 500);
+		return next(e);
+	}
+};
+
+// -------------------------------------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------------------------------
+
+exports.clearCart = clearCart;
+exports.removeFromCart = removeFromCart;
+exports.getCart = getCart;
+exports.addToCart = addToCart;
 exports.removeProductById = removeProductById;
 exports.updateProductById = updateProductById;
 exports.getProducts = getProducts;

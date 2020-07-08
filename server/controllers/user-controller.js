@@ -131,6 +131,10 @@ const login = async (req, res, next) => {
 
 	try {
 		const user = await User.findByCredentials(req.body.email, req.body.password);
+		if (!user) {
+			const error = new HttpError('Invalid credentials', 422);
+			return next(error);
+		}
 		const token = await user.generateAuthToken();
 		res.json({ user: user, token: token });
 	} catch (e) {

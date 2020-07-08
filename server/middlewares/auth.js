@@ -14,7 +14,7 @@ const auth = async (req, res, next) => {
 		const token = req.headers.authorization.split(' ')[1];
 		// console.log(token);
 		const decoded = jwt.verify(token, config.get('jwtSecret'));
-		console.log(decoded);
+		// console.log(decoded);
 		const user = await User.findOne({ _id: decoded._id });
 
 		if (!user) {
