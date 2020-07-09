@@ -30,6 +30,7 @@ const createProduct = async (req, res, next) => {
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
 		return next(new HttpError('Invalid inputs passed, please check your data.', 422));
+		// console.log(errors);
 	}
 
 	const { title, description, state, zip, city, locality, category, model, brand, contact, price } = req.body;
@@ -58,7 +59,7 @@ const createProduct = async (req, res, next) => {
 				brand,
 				model,
 				category,
-				image       : 'https://source.unsplash.com/random',
+				image       : req.file.path,
 				owner       : req.user.id,
 				location
 			});
@@ -89,13 +90,12 @@ const createProduct = async (req, res, next) => {
 				//   await createdPlace.save({ session: sess });
 				req.user.selledProducts.push(createdProduct);
 				await req.user.save();
-				res.json(createProduct);
+				// res.json(createProduct);
+				res.status(201).json({ product: createdProduct });
 			} catch (err) {
 				const error = new HttpError('Creating product failed, please try again.', 500);
 				return next(err);
 			}
-
-			res.status(201).json({ product: createdProduct });
 		}
 	});
 };
@@ -177,7 +177,7 @@ const updateProductById = async (req, res, next) => {
 		req.body.locality
 	];
 	arrAddress.join(' ');
-	console.log(arrAddress);
+	// console.log(arrAddress);
 	myGeocoder(arrAddress, async (err, resp) => {
 		if (err) {
 			return console.log(err);
@@ -247,7 +247,7 @@ const addToCart = async (req, res, next) => {
 		req.user.totalProducts = req.user.totalProducts + 1;
 		req.user.totalAmount = req.user.totalAmount + product.price;
 		await req.user.save();
-		res.json({ cart: req.user.cart });
+		res.json({ product });
 	} catch (e) {
 		const error = new HttpError('Unable to add product to cart,please try again', 500);
 		return next(error);
@@ -259,7 +259,10 @@ const addToCart = async (req, res, next) => {
 
 const getCart = async (req, res, next) => {
 	try {
-		const user = await User.findById(req.user.id).populate('cart');
+		const user = await User.findById(req.user.id).populate({
+			path     : 'cart',
+			populate : { path: 'owner', model: 'User' }
+		});
 		const cart = user.cart;
 		await res.json({ cart: cart });
 	} catch (e) {
@@ -287,7 +290,7 @@ const removeFromCart = async (req, res, next) => {
 		req.user.totalProducts = req.user.totalProducts - 1;
 		req.user.totalAmount = req.user.totalAmount - product.price;
 		await req.user.save();
-		res.json({ cart: req.user.cart });
+		res.json({ product });
 	} catch (e) {
 		const error = new HttpError('Unable to remove product from cart,please try again', 500);
 		return next(error);

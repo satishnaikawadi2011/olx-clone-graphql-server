@@ -3,6 +3,16 @@ const mongoose = require('mongoose');
 const HttpError = require('../models/http-error');
 const User = require('../models/user');
 const Product = require('../models/product');
+// const nodemailer = require('nodemailer');
+// const sendgridTransport = require('nodemailer-sendgrid-transport');
+
+// const transporter = nodemailer.createTransport(
+// 	sendgridTransport({
+// 		auth : {
+// 			api_key : 'SG.FuGQE6HSQpKavSTDaM-n8Q.TfGRcmn4eQ-ERIiTDQnVG8Afl3w5TmLeeStyTQB0L9Q'
+// 		}
+// 	})
+// );
 
 const createUser = async (req, res, next) => {
 	const errors = validationResult(req);
@@ -35,11 +45,18 @@ const createUser = async (req, res, next) => {
 
 	try {
 		await createdUser.save();
+		// await transporter.sendMail({
+		// 	to      : email,
+		// 	from    : 'satishnaikawadi2001@gmail.com',
+		// 	subject : 'Signup Succeeded !',
+		// 	html    : '<h1>You have successfully signed in for MeriDukan online Shop</h1>'
+		// });
 		const token = await createdUser.generateAuthToken();
 		res.status(201).json({ user: createdUser.toObject({ getters: true }), token: token });
 	} catch (err) {
-		const error = new HttpError('Signing up failed, please try again later.', 500);
-		return next(error);
+		// const error = new HttpError('Signing up failed, please try again later.', 500);
+		// return next(error);
+		console.log(err);
 	}
 	// console.log(createdUser);
 };

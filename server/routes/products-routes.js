@@ -26,8 +26,8 @@ router.post(
 	auth,
 	fileUpload.single('image'),
 	[
-		check('title').not().isEmpty().isLength({ min: 300 }),
-		check('description').isLength({ min: 650 }).not().isEmpty(),
+		check('title').not().isEmpty(),
+		check('description').not().isEmpty(),
 		check('state').not().isEmpty(),
 		check('city').not().isEmpty(),
 		check('locality').not().isEmpty(),
